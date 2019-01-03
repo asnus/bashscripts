@@ -1,0 +1,129 @@
+#!/bin/sh
+# jupyter notebook daemon scripts. Please local this file in /etc/rc.d/init.d 
+#
+#  lzh
+#  2019-01-02
+#
+# 
+#
+# chkconfig: 2345 90 10
+# description: Starts and stops the jupyter notebook daemon for \
+#             python developments.
+#
+### BEGIN INIT INFO
+# Provides:          jupyter
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: jupyter notebook for python developments
+# Description:       jupyter notebook daemon for python developments for centos 6 server
+#                    this daemon will make jupyter notebook running as a daemon service for 
+#                    people python developments.
+### END INIT INFO
+# Author: lzh
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# the variables
+
+NOTEBOOK_USER=guest
+NOTEBOOK_VENV=/opt/venv
+NOTEBOOK_WORKDIR=/home/$NOTEBOOK_USER/notebook
+NOTEBOOK_CONFIGFILE=$NOTEBOOK_VENV/jupyter_notebook_config.py
+NOTEBOOK_OPTIONS=" --config=${NOTEBOOK_CONFIGFILE} --notebook-dir=${NOTEBOOK_WORKDIR} "
+
+prog=jupyter-notebook
+exec=$NOTEBOOK_VENV/bin/$prog
+
+PROC=jupyter
+NOTEBOOK_PIDFILE=/var/run/$prog.pid
+LOCKFILE=/var/lock/subsys/$prog
+
+
+start() {
+    [ -x $exec ] || exit 5
+    [-d $NOTEBOOK_WORKDIR ] || mkdir $NOTEBOOK_WORKDIR
+    echo -n $"Starting $prog: "
+    status_q && echo -n "already running" && warning && echo && exit 0
+    daemon --user $NOTEBOOK_USER \
+        --pidfile $NOTEBOOK_PIDFILE \
+        nohup $exec $NOTEBOOK_OPTIONS >/dev/null 2>&1 &
+    retval=$?
+    [ $retval -eq 0 ] && touch $LOCKFILE && success || failure
+    echo
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    retval=0
+    if ! status_q ; then
+	echo -n "already stopped" && warning
+    else
+        pkill -u $NOTEBOOK_USER $PROC
+        retval=$?
+        [ $retval -eq 0 ] && rm -f $LOCKFILE  && success || failure
+    fi
+    echo
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+usage() {
+    echo "Usage: notebook {start|stop|status|restart|force-reload}" >&2
+}
+
+status() {
+    pgrep -u $NOTEBOOK_USER $PROC  > /dev/null && status="$?" || status="$?"
+    if [ "$status" = 0 ]; then
+        echo "$prog is running"
+        return 0
+    elif [ "$status" = 4 ]; then
+        echo "could not access PID file for $prog"
+        return $status
+    else
+        echo "$prog is not running"
+        return $status
+    fi
+}
+
+status_q() {
+    status >/dev/null 2>&1
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status
+    ;;
+    reload)
+        usage
+        exit 3
+    ;;
+    force-reload)
+        reload
+    ;;
+    restart)
+        restart
+    ;;
+    '')
+        usage
+        exit 3
+    ;;
+esac
+exit $?
