@@ -79,7 +79,7 @@
 #  
 #  Local IP addresses (such as 127.0.0.1 and ::1) are allowed as local, along
 #  with hostnames configured in local_hostnames.
-c.NotebookApp.allow_remote_access = True
+#c.NotebookApp.allow_remote_access = True
 
 ## 是否允许notebook在root用户下运行.
 #c.NotebookApp.allow_root = False

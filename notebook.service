@@ -1,0 +1,23 @@
+#	jupyter-notebook service 
+
+[Unit]
+Description=jupyter notebook
+After=network.target
+
+[Service]
+Type=simple
+
+User=guest
+Group=guest
+
+# config dir
+Environment=CONFIGDIR=/opt/venv/bin/jupyter_notebook_config.py
+
+
+ExecStart=/opt/venv/bin/jupyter-notebook --config=${CONFIGDIR}
+
+# Give a reasonable amount of time for the server to start up/shut down
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -32,7 +32,7 @@ NOTEBOOK_USER=guest
 NOTEBOOK_VENV=/opt/venv
 NOTEBOOK_WORKDIR=/home/$NOTEBOOK_USER/notebook
 NOTEBOOK_CONFIGFILE=$NOTEBOOK_VENV/jupyter_notebook_config.py
-NOTEBOOK_OPTIONS=" --config=${NOTEBOOK_CONFIGFILE} --notebook-dir=${NOTEBOOK_WORKDIR} "
+
 
 prog=jupyter-notebook
 exec=$NOTEBOOK_VENV/bin/$prog
@@ -44,12 +44,12 @@ LOCKFILE=/var/lock/subsys/$prog
 
 start() {
     [ -x $exec ] || exit 5
-    [-d $NOTEBOOK_WORKDIR ] || mkdir $NOTEBOOK_WORKDIR
+    [ -e $NOTEBOOK_WORKDIR ] || mkdir $NOTEBOOK_WORKDIR
     echo -n $"Starting $prog: "
     status_q && echo -n "already running" && warning && echo && exit 0
     daemon --user $NOTEBOOK_USER \
         --pidfile $NOTEBOOK_PIDFILE \
-        nohup $exec $NOTEBOOK_OPTIONS >/dev/null 2>&1 &
+        nohup $exec "--config=${NOTEBOOK_VENV}/jupyter_notebook_config.py --notebook-dir=${NOTEBOOK_WORKDIR}" >/dev/null 2>&1 &
     retval=$?
     [ $retval -eq 0 ] && touch $LOCKFILE && success || failure
     echo
@@ -70,25 +70,17 @@ stop() {
     return $retval
 }
 
-restart() {
-    stop
-    start
-}
-
-reload() {
-    restart
-}
 
 usage() {
-    echo "Usage: notebook {start|stop|status|restart|force-reload}" >&2
+    echo "Usage: notebook {start|stop|status" >&2
 }
 
 status() {
     pgrep -u $NOTEBOOK_USER $PROC  > /dev/null && status="$?" || status="$?"
-    if [ "$status" = 0 ]; then
+    if [ "$status" -eq 0 ]; then
         echo "$prog is running"
         return 0
-    elif [ "$status" = 4 ]; then
+    elif [ "$status" -eq 4 ]; then
         echo "could not access PID file for $prog"
         return $status
     else
@@ -110,16 +102,6 @@ case "$1" in
     ;;
     status)
         status
-    ;;
-    reload)
-        usage
-        exit 3
-    ;;
-    force-reload)
-        reload
-    ;;
-    restart)
-        restart
     ;;
     '')
         usage

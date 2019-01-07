@@ -60,6 +60,8 @@ if [ "$os_type" == "desktop" ] ; then
    sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
    setenforce 0
 fi
+
+rm -f /etc/vimrc.bak
 mv /etc/vimrc /etc/vimrc.bak
 cp $DIR/vimrc /etc/
 
