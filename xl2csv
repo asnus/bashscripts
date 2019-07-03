@@ -1,0 +1,32 @@
+#!/usr/bin/python3.6
+# -*- coding: utf-8 -*-
+"""
+this program is used to translate excel file to csv file.
+
+usage: xl2csv [-win] file1 file2 ...
+
+with the -win argument, the csv file will use windows newline '\r\n'
+
+Created on Wed Jul  3 15:44:06 2019
+
+@author: lzh
+"""
+
+import pandas as pd
+import sys
+
+newline = ''
+
+if '-win' in sys.argv:
+    newline = '\r\n'
+else:
+    newline = '\n'
+    
+for file_item in sys.argv:
+    if file_item[-5:] != '.xlsx' :
+        continue
+    
+    csv_file_name = file_item[0:-5] + '.csv'
+    #print(file_item)
+    table_data = pd.read_excel(file_item , header = None, index_col = None)
+    table_data.to_csv(csv_file_name, header = None, index = None, line_terminator=newline, encoding = 'UTF-8')
